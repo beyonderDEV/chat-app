@@ -49,7 +49,7 @@ module.exports = {
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
         if (!isPasswordCorrect) {
           errors.password = "Incorrect password!";
-          throw new AuthenticationError("Wrong password", { errors });
+          throw new UserInputError("Wrong password", { errors });
         }
 
         const token = jwt.sign(
