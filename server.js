@@ -1,6 +1,8 @@
 const { ApolloServer } = require("apollo-server");
 const { sequelize } = require("./models");
 
+require("dotenv").config();
+
 // A map of functions which return data for the schema.
 const typeDefs = require("./graphql/typeDefs");
 const resolvers = require("./graphql/resolvers");
@@ -8,6 +10,7 @@ const resolvers = require("./graphql/resolvers");
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: (ctx) => ctx,
 });
 
 server.listen().then(({ url }) => {

@@ -1,16 +1,73 @@
 const { User } = require("../models");
 const bcrypt = require("bcryptjs");
-const { UserInputError } = require("apollo-server");
+const { UserInputError, AuthenticationError } = require("apollo-server");
 const { GraphQLError } = require("graphql");
+const jwt = require("jsonwebtoken");
+const { Op } = require("sequelize");
 
 module.exports = {
   Query: {
-    getUsers: async () => {
+    getUsers: async (_, __, context) => {
       try {
-        const users = await User.findAll();
+        let user;
+        if (context.req && context.req.headers.authorization) {
+          const token = context.req.headers.authorization.split("Bearer ")[1];
+          jwt.verify(token, process.env.SECRET, (err, decodedToken) => {
+            if (err) {
+              throw new AuthenticationError("Invalid token");
+            }
+            user = decodedToken;
+          });
+        }
+        const users = await User.findAll({
+          where: { username: { [Op.ne]: user.username } },
+        });
         return users;
       } catch (error) {
         console.log(error);
+        throw error;
+      }
+    },
+    login: async (_, args) => {
+      const { username, password } = args;
+      let errors = {};
+      try {
+        if (username.trim() === "")
+          errors.username = "Username must not be empty";
+        if (password === "") errors.password = "Password must not be empty";
+
+        if (Object.keys(errors).length > 0) {
+          throw new UserInputError("Bad input", { errors });
+        }
+
+        const user = await User.findOne({ where: { username } });
+
+        if (!user) {
+          errors.username = "User not found!";
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        if (!isPasswordCorrect) {
+          errors.password = "Incorrect password!";
+          throw new AuthenticationError("Wrong password", { errors });
+        }
+
+        const token = jwt.sign(
+          {
+            username,
+          },
+          process.env.SECRET,
+          { expiresIn: 60 * 60 }
+        );
+
+        return {
+          ...user.toJSON(),
+          createdAt: user.createdAt.toISOString(),
+          token,
+        };
+      } catch (error) {
+        console.log(error);
+        throw error;
       }
     },
   },
@@ -30,12 +87,6 @@ module.exports = {
       if (password !== confirmPassword) {
         errors.confirmPassword = "Passwords must match";
       }
-
-      // const userByUsername = await User.findOne({ where: { username } });
-      // const userByEmail = await User.findOne({ where: { email } });
-
-      // if (userByUsername) errors.username = "Username is already taken";
-      // if (userByEmail) errors.email = "Email is already taken";
 
       if (Object.keys(errors).length > 0) {
         throw new GraphQLError(errors);
