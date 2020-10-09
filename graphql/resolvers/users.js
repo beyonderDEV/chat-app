@@ -1,4 +1,4 @@
-const { User } = require("../models");
+const { User } = require("../../models");
 const bcrypt = require("bcryptjs");
 const { UserInputError, AuthenticationError } = require("apollo-server");
 const { GraphQLError } = require("graphql");
@@ -7,18 +7,10 @@ const { Op } = require("sequelize");
 
 module.exports = {
   Query: {
-    getUsers: async (_, __, context) => {
+    getUsers: async (_, __, {user}) => {
       try {
         let user;
-        if (context.req && context.req.headers.authorization) {
-          const token = context.req.headers.authorization.split("Bearer ")[1];
-          jwt.verify(token, process.env.SECRET, (err, decodedToken) => {
-            if (err) {
-              throw new AuthenticationError("Invalid token");
-            }
-            user = decodedToken;
-          });
-        }
+        if (!user)  throw new AuthenticationError("Unauthenticated")
         const users = await User.findAll({
           where: { username: { [Op.ne]: user.username } },
         });
@@ -111,6 +103,6 @@ module.exports = {
         }
         throw new UserInputError("Bad input", { errors });
       }
-    },
+    }
   },
 };
