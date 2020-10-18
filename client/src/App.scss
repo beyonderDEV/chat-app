@@ -1,5 +1,11 @@
+$paragraph-margin-bottom: 0;
+
 @import "~bootstrap/scss/bootstrap";
 
 body {
   background-color: rgb(230, 230, 230);
+}
+
+.select-user:hover {
+  background-color: rgb(253, 253, 253);
 }

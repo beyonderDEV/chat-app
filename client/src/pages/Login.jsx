@@ -29,11 +29,11 @@ export default function Login(props) {
 
   const [loginUser, { loading }] = useLazyQuery(LOGIN_USER, {
     onError(err) {
+      console.log("Error: ");
       console.log(err.graphQLErrors[0].extensions.errors);
       setErrors(err.graphQLErrors[0].extensions.errors);
     },
     onCompleted(data) {
-      
       dispatch({type: "LOGIN", payload: data.login})
       props.history.push("/");
     },

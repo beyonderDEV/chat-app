@@ -1,4 +1,4 @@
-const { Message } = require("../../models");
+const { Message, User } = require("../../models");
 const { UserInputError, AuthenticationError } = require("apollo-server");
 const {Op} = require("sequelize")
 
