@@ -9,7 +9,6 @@ module.exports = {
   Query: {
     getUsers: async (_, __, {user}) => {
       try {
-        let user;
         if (!user)  throw new AuthenticationError("Unauthenticated")
         const users = await User.findAll({
           where: { username: { [Op.ne]: user.username } },
